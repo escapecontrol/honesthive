@@ -23,8 +23,9 @@ const ManageTeam = () => {
     const fetchTeam = async () => {
       try {
         const response = await getMyTeam(token);
+        const noTeamsFound = response.statusCode === 200 && response.data.teams.length === 0;
 
-        if (response.statusCode === 404) {
+        if (response.statusCode === 404 || noTeamsFound) {
           navigate("/create-team");
         }
 
