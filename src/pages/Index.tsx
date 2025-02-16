@@ -15,7 +15,6 @@ const Index = () => {
   const { user, token } = useAuth();
   const { toast } = useToast();
   const [members, setMembers] = useState<Member[]>([]);
-  const [teamId, setTeamId] = useState<string>('');
   const [teamFeedback, setTeamFeedback] = useState<TeamFeedback[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);

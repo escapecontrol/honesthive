@@ -25,3 +25,6 @@ dist-ssr
 
 # Yarn
 yarn.lock
+
+# Notes
+notes/
