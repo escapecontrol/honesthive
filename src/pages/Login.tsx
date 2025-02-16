@@ -17,7 +17,6 @@ export default function Login() {
         title: "Google Login",
         description: "You have successfully logged in with Google.",
       });
-      // navigate("/"); // Redirect to home or another page
       const from = location.state?.from || '/';
       navigate(from, { replace: true });
     } catch (error) {
@@ -46,7 +45,7 @@ export default function Login() {
           >
             <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
           </svg>
-          Acme Inc
+          HonestHive
         </div>
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
@@ -60,7 +59,7 @@ export default function Login() {
       <div className="lg:p-8">
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
           <div className="flex flex-col space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Good day,</h1>
             <p className="text-sm text-muted-foreground">
               Sign in to your account with Google
             </p>
@@ -88,9 +87,10 @@ export default function Login() {
           </Button>
           <p className="px-8 text-center text-sm text-muted-foreground">
             Don't have an account?{" "}
-            <Link to="/signup" className="underline underline-offset-4 hover:text-primary">
+            Just login with Google and we'll create an account for you.
+            {/* <Link to="/signup" className="underline underline-offset-4 hover:text-primary">
               Sign up
-            </Link>
+            </Link> */}
           </p>
         </div>
       </div>
