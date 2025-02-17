@@ -6,7 +6,8 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { getMyProfile } from "@/services/peerApi";
 import { useSetRecoilState } from "recoil";
 import { userState } from "@/atoms/UserState";
-import Logo from "@/components/Logo";
+import Logo from "@/components/logos/Logo";
+import DarkerLogo from "@/components/logos/DarkerLogo";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -66,8 +67,7 @@ export default function Login() {
         <div className="absolute inset-0 bg-primary" />
         <div className="relative z-20 flex items-center text-lg font-medium">
           <Logo width={28} height={33} />
-          &nbsp;
-          HonestHive
+          &nbsp; HonestHive
         </div>
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
@@ -82,10 +82,13 @@ export default function Login() {
       </div>
       <div className="lg:p-8">
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+          <div className="flex justify-center">
+            <DarkerLogo />
+          </div>
           <div className="flex flex-col space-y-2 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight">Good day,</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Welcome,</h1>
             <p className="text-sm text-muted-foreground">
-              Sign in to your account with Google
+              Sign in to your account below.
             </p>
           </div>
           <Button
