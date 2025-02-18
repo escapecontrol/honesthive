@@ -9,6 +9,8 @@ import { getTeamFeedback } from "@/services/feedbackApi";
 import { useToast } from "@/hooks/use-toast";
 import { Member } from "@/types/api/member";
 import { TeamFeedback } from "@/types/api/teamFeedback";
+import { useRecoilState, useSetRecoilState } from "recoil";
+import { userState } from "@/atoms/UserState";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -18,33 +20,41 @@ const Index = () => {
   const [teamFeedback, setTeamFeedback] = useState<TeamFeedback[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  // const setUser = useSetRecoilState(userState);
+  const [currentUser, setCurrentUser] = useRecoilState(userState);
 
   useEffect(() => {
     const fetchTeam = async () => {
       try {
-        const response = await getMyTeam(token);
-        if (response.statusCode === 404) {
-          navigate("/create-team");
-          return;
+        if (!currentUser.team?.id) {
+          const response = await getMyTeam(token);
+          if (response.statusCode === 404) {
+            navigate("/create-team");
+            return;
+          }
+
+          const teamMembers = response.data.teams[0].members.map(
+            (member: Member) => ({
+              id: member.id,
+              name: member.name,
+              email: member.email,
+              profileUrl: member.profileUrl,
+              isPending: false,
+            })
+          );
+
+          const pendingMembers = response.data.teams[0].pendingMembers.map(
+            (member: Member) => ({
+              id: member.id,
+              name: member.name,
+              email: member.email,
+              profileUrl: member.profileUrl,
+              isPending: true,
+            })
+          );
+
+          setMembers([...teamMembers, ...pendingMembers]);
         }
-
-        const teamMembers = response.data.teams[0].members.map((member: Member) => ({
-          id: member.id,
-          name: member.name,
-          email: member.email,
-          profileUrl: member.profileUrl,
-          isPending: false,
-        }));
-
-        const pendingMembers = response.data.teams[0].pendingMembers.map((member: Member) => ({
-          id: member.id,
-          name: member.name,
-          email: member.email,
-          profileUrl: member.profileUrl,
-          isPending: true,
-        }));
-
-        setMembers([...teamMembers, ...pendingMembers]);
       } catch (error) {
         toast({
           title: "Error",
@@ -72,7 +82,7 @@ const Index = () => {
       fetchTeam();
 
       // TODO: Fix teamId
-      fetchFeedback('679d3792783af6def0268354');
+      fetchFeedback("679d3792783af6def0268354");
     }
   }, [user, token, navigate, toast]);
 
@@ -84,7 +94,8 @@ const Index = () => {
     if (member.isPending) {
       toast({
         title: "Oops!",
-        description: "Providing feedback to an invited member is not supported.",
+        description:
+          "Providing feedback to an invited member is not supported.",
         variant: "destructive",
       });
       return;
@@ -101,21 +112,19 @@ const Index = () => {
             Our Feedback
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            Celebrate your colleagues by sharing meaningful feedback and recognition.
+            Celebrate your colleagues by sharing meaningful feedback and
+            recognition.
           </p>
         </div>
 
-        <TeamMembersList 
+        <TeamMembersList
           members={members}
           onMemberSelect={handleMemberSelect}
         />
 
-        <RecentKudos 
-          kudos={teamFeedback}
-          onViewKudos={handleViewKudos}
-        />
+        <RecentKudos kudos={teamFeedback} onViewKudos={handleViewKudos} />
       </div>
-      
+
       {selectedMember && (
         <FeedbackDialog
           member={selectedMember}

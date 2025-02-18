@@ -7,32 +7,29 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { getMyProfile, saveMyProfile } from "@/services/peerApi";
 import { useAuth } from '@/hooks/use-auth';
+import { useRecoilState } from "recoil";
+import { userState } from "@/atoms/UserState";
 
 export default function Profile() {
+  const { toast } = useToast();
   const { user, token } = useAuth();
+  const navigate = useNavigate();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [profileUrl, setProfileUrl] = useState("");
   const [outOfSync, setOutOfSync] = useState(false);
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const [appUser, setAppUser] = useRecoilState(userState);
 
   useEffect(() => {
     if (user) {
       const fetchProfile = async () => {
         try {
-          const { data } = await getMyProfile(token);
-
-          if (
-            data.firstName === "" ||
-            data.lastName === "" ||
-            data.email === "" ||
-            data.profileUrl === ""
-          ) {
+          // If there's no data, it means the profile is out of sync
+          if (!appUser.hasCompletedProfile) {
             setOutOfSync(true);
 
-            // Use details from the auth provider
+            // set the local state with the user data from the auth object
             setFirstName(user.displayName?.split(" ")[0] || "");
             setLastName(user.displayName?.split(" ")[1] || "");
             setEmail(user.email || "");
@@ -40,10 +37,11 @@ export default function Profile() {
             return;
           }
 
-          setFirstName(data.firstName);
-          setLastName(data.lastName);
-          setEmail(data.email);
-          setProfileUrl(data.profileUrl);
+          // If there's data, it means the profile is in sync
+          setFirstName(appUser.firstName);
+          setLastName(appUser.lastName);
+          // setEmail(data.email);
+          setProfileUrl(appUser.profileUrl);
         } catch (error) {
           toast({
             title: "Error",
@@ -55,12 +53,21 @@ export default function Profile() {
 
       fetchProfile();
     }
-  }, [user, token, navigate, toast]);
+  }, [user, token, navigate, toast, appUser]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await saveMyProfile(token, { firstName, lastName, email, profileUrl });
+
+      // Update the Recoil state with the new data
+      setAppUser((prev) => ({
+        ...prev,
+        firstName,
+        lastName,
+        profileUrl,
+        hasCompletedProfile: true,
+      }));
       toast({
         title: "Profile Updated",
         description: "Nice one! We have updated your profile.",
