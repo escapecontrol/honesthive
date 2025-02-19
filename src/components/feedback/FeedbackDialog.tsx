@@ -21,7 +21,8 @@ export const FeedbackDialog = ({ member, token, isOpen, onOpenChange }: Feedback
   const handleSubmit = async () => {
     if (!message.trim()) {
       toast({
-        title: "Please enter a message",
+        title: "🫢 Excuse me?",
+        description: "You can't submit an empty feedback message!",
         variant: "destructive",
       });
       return;

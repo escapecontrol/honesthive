@@ -4,7 +4,6 @@ import { FeedbackDialog } from "@/components/feedback/FeedbackDialog";
 import { TeamMembersList } from "@/components/teams/TeamMembersList";
 import { RecentKudos } from "@/components/kudos/RecentKudos";
 import { useAuth } from "@/hooks/use-auth";
-import { getMyTeam } from "@/services/peerApi";
 import { getTeamFeedback } from "@/services/feedbackApi";
 import { useToast } from "@/hooks/use-toast";
 import { Member } from "@/types/api/member";
@@ -16,59 +15,22 @@ import { UserPlus } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const { toast } = useToast();
-  const [members, setMembers] = useState<Member[]>([]);
   const [teamFeedback, setTeamFeedback] = useState<TeamFeedback[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useAtom(userAtom);
+  const [appUser] = useAtom(userAtom);
 
   useEffect(() => {
-    const fetchTeam = async () => {
-      try {
-        if (!currentUser.team?.id) {
-          const response = await getMyTeam(token);
-          const noTeamsFound =
-            response.statusCode === 200 && response.data.teams?.length === 0;
-          if (response.statusCode === 404 || noTeamsFound) {
-            navigate("/create-team");
-            return;
-          }
-
-          const teamMembers = response.data.teams[0].members.map(
-            (member: Member) => ({
-              id: member.id,
-              name: member.name,
-              email: member.email,
-              profileUrl: member.profileUrl,
-              isPending: false,
-            })
-          );
-
-          const pendingMembers = response.data.teams[0].pendingMembers.map(
-            (member: Member) => ({
-              id: member.id,
-              name: member.name,
-              email: member.email,
-              profileUrl: member.profileUrl,
-              isPending: true,
-            })
-          );
-          setMembers([...teamMembers, ...pendingMembers]);
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred.",
-          variant: "destructive",
-        });
+    const fetchFeedback = async () => {
+      if (!appUser.team.id) {
+        navigate("/create-team");
+        return null;
       }
-    };
-
-    const fetchFeedback = async (teamId: string) => {
+      
       try {
-        const response = await getTeamFeedback(token, teamId);
+        const response = await getTeamFeedback(token, appUser.team.id);
         setTeamFeedback(response.data.feedback);
       } catch (error) {
         console.log(error);
@@ -80,13 +42,8 @@ const Index = () => {
       }
     };
 
-    if (user) {
-      fetchTeam();
-
-      // TODO: Fix teamId
-      fetchFeedback("679d3792783af6def0268354");
-    }
-  }, [user, token, navigate, toast, currentUser]);
+    fetchFeedback();
+  }, [token, toast, appUser.team.id, navigate]);
 
   const handleViewKudos = (name: string, email: string) => {
     navigate("/view-kudos", { state: { userName: name, userEmail: email } });
@@ -96,8 +53,7 @@ const Index = () => {
     if (member.isPending) {
       toast({
         title: "Oops!",
-        description:
-          "Providing feedback to an invited member is not supported.",
+        description: "Providing feedback to an invited member is not supported.",
         variant: "destructive",
       });
       return;
@@ -114,14 +70,13 @@ const Index = () => {
             Our Feedback
           </h1>
           <p className="mt-4 text-lg text-muted-foreground">
-            Celebrate your colleagues by sharing meaningful feedback and
-            recognition.
+            Celebrate your colleagues by sharing meaningful feedback and recognition.
           </p>
         </div>
 
-        {members.length > 0 ? (
+        {appUser.team.members.length > 0 ? (
           <TeamMembersList
-            members={members}
+            members={appUser.team.members}
             onMemberSelect={handleMemberSelect}
           />
         ) : (
