@@ -25,7 +25,7 @@ const AppContent = () => {
           <Route path="/my-kudos" element={<MyKudos />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/create-team" element={<CreateTeam />} />
-          <Route path="/team-invitation" element={<TeamInvitation />} />
+          <Route path="/team-invitation/:slug" element={<TeamInvitation />} />
         </Route>
       </Routes>
       <Toaster />

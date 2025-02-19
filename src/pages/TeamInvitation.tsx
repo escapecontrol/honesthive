@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -10,14 +10,14 @@ import { useAuth } from "@/hooks/use-auth";
 
 export default function TeamInvitation() {
   const { user, token } = useAuth();
-  const [searchParams] = useSearchParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [invitationData, setInvitationData] = useState(null);
 
-  const invitationSlug = searchParams.get("is") || "-";
+  const invitationSlug = slug || "-";
   
   useEffect(() => {
     const fetchInvitation = async () => {
