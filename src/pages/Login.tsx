@@ -4,8 +4,8 @@ import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { getMyProfile } from "@/services/peerApi";
-import { useSetRecoilState } from "recoil";
-import { userState } from "@/atoms/UserState";
+import { useAtom } from "jotai";
+import { userAtom } from "@/atoms/UserAtom";
 import Logo from "@/components/logos/Logo";
 import DarkerLogo from "@/components/logos/DarkerLogo";
 
@@ -13,7 +13,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const setUser = useSetRecoilState(userState);
+  const [user, setUser] = useAtom(userAtom);
 
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
