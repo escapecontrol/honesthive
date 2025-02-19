@@ -55,7 +55,6 @@ const Index = () => {
               isPending: true,
             })
           );
-
           setMembers([...teamMembers, ...pendingMembers]);
         }
       } catch (error) {
@@ -135,6 +134,7 @@ const Index = () => {
 
         <RecentKudos kudos={teamFeedback} onViewKudos={handleViewKudos} />
       </div>
+
 
       {selectedMember && (
         <FeedbackDialog
