@@ -1,5 +1,13 @@
 import { atom } from "jotai";
 
+export interface Member {
+  id: string;
+  name: string;
+  email: string;
+  profileUrl: string;
+  isPending: boolean;
+}
+
 export interface User {
   firstName: string;
   lastName: string;
@@ -8,12 +16,7 @@ export interface User {
   team: {
     id: string;
     name: string;
-    members: {
-      id: string;
-      name: string;
-      email: string;
-      profileUrl: string;
-    }[];
+    members: Member[];
   }; 
 }
 

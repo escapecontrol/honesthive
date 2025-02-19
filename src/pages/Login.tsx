@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { auth } from "@/lib/firebase";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { getMyProfile } from "@/services/peerApi";
+import { getMyProfile, getMyTeam } from "@/services/peerApi";
 import { useAtom } from "jotai";
-import { userAtom } from "@/atoms/UserAtom";
+import { Member, userAtom } from "@/atoms/UserAtom";
 import Logo from "@/components/logos/Logo";
 import DarkerLogo from "@/components/logos/DarkerLogo";
 
@@ -13,7 +13,7 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const [user, setUser] = useAtom(userAtom);
+  const [, setUser] = useAtom(userAtom);
 
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
@@ -21,19 +21,35 @@ export default function Login() {
       const result = await signInWithPopup(auth, provider);
       const token = await result.user.getIdToken();
 
-      const { data, statusCode } = await getMyProfile(token);
-      const hasCompletedProfile = Object.keys(data).length > 0;
+      const [profileResponse, teamResponse] = await Promise.all([
+        getMyProfile(token),
+        getMyTeam(token)
+      ]);
 
-      if (statusCode === 200) {
+      const hasCompletedProfile = Object.keys(profileResponse.data).length > 0;
+      const team = teamResponse.data.teams?.[0] || { id: "", name: "", members: [], pendingMembers: [] };
+
+      // Process active and pending members
+      const activeMembers = (team.members || []).map((member: Member) => ({
+        ...member,
+        isPending: false
+      }));
+
+      const pendingMembers = (team.pendingMembers || []).map((member: Member) => ({
+        ...member,
+        isPending: true
+      }));
+
+      if (profileResponse.statusCode === 200) {
         setUser({
-          firstName: data?.firstName || "",
-          lastName: data?.lastName || "",
-          profileUrl: data?.profileUrl || "",
+          firstName: profileResponse.data?.firstName || "",
+          lastName: profileResponse.data?.lastName || "",
+          profileUrl: profileResponse.data?.profileUrl || "",
           hasCompletedProfile: hasCompletedProfile,
           team: {
-            id: "",
-            name: "",
-            members: [],
+            id: team.id,
+            name: team.name,
+            members: [...activeMembers, ...pendingMembers],
           },
         });
       }
@@ -42,9 +58,6 @@ export default function Login() {
         title: "Google Login",
         description: "You have successfully logged in with Google.",
       });
-
-      // if there are any query params, we can add that to state
-      // because if there's profile we may need to redirect after updating profile
 
       if (hasCompletedProfile) {
         const from = location.state?.from || "/";

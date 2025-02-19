@@ -1,70 +1,31 @@
 import { Input } from "@/components/ui/input";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { UserPlus } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAuth } from "@/hooks/use-auth";
-import { getMyTeam } from "@/services/peerApi";
 import { inviteMember } from "@/services/inviteApi";
 import { Member } from "@/types/api/member";
 import { InviteMemberDialog } from "@/components/members/InviteMemberDialog";
 import { MemberCard } from "@/components/members/MemberCard";
+import { useAtom } from "jotai";
+import { userAtom } from "@/atoms/UserAtom";
 
 const ManageTeam = () => {
-  const { user, token } = useAuth();
-  const [members, setMembers] = useState<Member[]>([]);
+  const { token } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [appUser, setAppUser] = useAtom(userAtom);
 
-  useEffect(() => {
-    const fetchTeam = async () => {
-      try {
-        const response = await getMyTeam(token);
-        const noTeamsFound = response.statusCode === 200 && response.data.teams?.length === 0;
+  if (!appUser.team.id) {
+    navigate("/create-team");
+    return null;
+  }
 
-        if (response.statusCode === 404 || noTeamsFound) {
-          navigate("/create-team");
-          return;
-        }
-
-        const teamMembers = response.data.teams[0].members.map((member: Member) => ({
-          id: member.id,
-          name: member.name,
-          email: member.email,
-          profileUrl: member.profileUrl,
-          isPending: false,
-        }));
-
-        const pendingMembers = response.data.teams[0].pendingMembers.map(
-          (member: Member) => ({
-            id: member.id,
-            name: member.name,
-            email: member.email,
-            profileUrl: member.profileUrl,
-            isPending: true,
-          })
-        );
-
-        setMembers([...teamMembers, ...pendingMembers]);
-      } catch (error) {
-        console.log(error);
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    if (user) {
-      fetchTeam();
-    }
-  }, [user, token, navigate, toast]);
-
-  const filteredMembers = members.filter((member) =>
+  const filteredMembers = appUser.team.members.filter((member) =>
     member.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -86,7 +47,15 @@ const ManageTeam = () => {
         ...newMember,
         isPending: true,
       };
-      setMembers([...members, member]);
+
+      setAppUser(prev => ({
+        ...prev,
+        team: {
+          ...prev.team,
+          members: [...prev.team.members, member]
+        }
+      }));
+
       toast({
         title: "Success",
         description: "Team member invited successfully",
@@ -107,7 +76,14 @@ const ManageTeam = () => {
   };
 
   const handleRemoveMember = (member: Member) => {
-    setMembers(members.filter((u) => u.id !== member.id));
+    setAppUser(prev => ({
+      ...prev,
+      team: {
+        ...prev.team,
+        members: prev.team.members.filter(m => m.id !== member.id)
+      }
+    }));
+
     toast({
       title: "Member Removed",
       description: `${member.name} has been removed from the team.`,
@@ -126,7 +102,7 @@ const ManageTeam = () => {
           </p>
         </div>
 
-        {members.length > 0 ? (
+        {appUser.team.members.length > 0 ? (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <Input

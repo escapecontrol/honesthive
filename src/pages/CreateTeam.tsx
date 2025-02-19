@@ -9,6 +9,8 @@ import { auth } from "@/lib/firebase";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { createTeam } from "@/services/peerApi";
+import { useAtom } from "jotai";
+import { userAtom } from "@/atoms/UserAtom";
 
 type TeamType = "family" | "organisation";
 
@@ -25,6 +27,7 @@ export default function CreateTeam() {
   const [token, setToken] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [, setAppUser] = useAtom(userAtom);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(
@@ -45,7 +48,8 @@ export default function CreateTeam() {
   const handleNext = () => {
     if (currentStep === 1 && !teamType) {
       toast({
-        title: "Please select a team type",
+        title: "One moment before we continue 🤔",
+        description: "You are forgetting to select a type of team?",
         variant: "destructive",
       });
       return;
@@ -64,19 +68,34 @@ export default function CreateTeam() {
   const handleCreate = async () => {
     if (!teamName.trim()) {
       toast({
-        title: "Please enter a team name",
+        title: "One more thing before we continue 🤔",
+        description: "You have forgotten to enter a team name.",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      await createTeam( token, teamName, teamType );
-      toast({
-        title: "Team Created",
-        description: `${teamName} has been created successfully.`,
-      });
-      navigate("/manage-team"); // Redirect to login if not authenticated
+      const { data, statusCode } = await createTeam(token, teamName, teamType);
+      
+      if (statusCode === 200 && data) {
+        setAppUser(prev => ({
+          ...prev,
+          team: {
+            id: data.team.id,
+            name: data.team.name,
+            members: [],
+          }
+        }));
+
+        toast({
+          title: "Team Created 🎉",
+          description: `${teamName} has been created successfully.`,
+        });
+        navigate("/manage-team");
+      } else {
+        throw new Error("Failed to create team");
+      }
     } catch (error) {
       toast({
         title: "Error",

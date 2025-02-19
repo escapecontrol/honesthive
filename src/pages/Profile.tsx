@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { getMyProfile, saveMyProfile } from "@/services/peerApi";
+import { saveMyProfile } from "@/services/peerApi";
 import { useAuth } from "@/hooks/use-auth";
 import { useAtom } from "jotai";
 import { User, userAtom } from "@/atoms/UserAtom";
@@ -71,7 +71,7 @@ export default function Profile() {
         })
       );
       toast({
-        title: "Profile Updated",
+        title: "Profile Updated 🥳",
         description: "Nice one! We have updated your profile.",
       });
       navigate("/");
