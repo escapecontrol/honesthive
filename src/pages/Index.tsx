@@ -9,8 +9,10 @@ import { getTeamFeedback } from "@/services/feedbackApi";
 import { useToast } from "@/hooks/use-toast";
 import { Member } from "@/types/api/member";
 import { TeamFeedback } from "@/types/api/teamFeedback";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import { userState } from "@/atoms/UserState";
+import { useAtom } from "jotai";
+import { userAtom } from "@/atoms/UserAtom";
+import { EmptyState } from "@/components/ui/empty-state";
+import { UserPlus } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -20,15 +22,16 @@ const Index = () => {
   const [teamFeedback, setTeamFeedback] = useState<TeamFeedback[]>([]);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  // const setUser = useSetRecoilState(userState);
-  const [currentUser, setCurrentUser] = useRecoilState(userState);
+  const [currentUser, setCurrentUser] = useAtom(userAtom);
 
   useEffect(() => {
     const fetchTeam = async () => {
       try {
         if (!currentUser.team?.id) {
           const response = await getMyTeam(token);
-          if (response.statusCode === 404) {
+          const noTeamsFound =
+            response.statusCode === 200 && response.data.teams?.length === 0;
+          if (response.statusCode === 404 || noTeamsFound) {
             navigate("/create-team");
             return;
           }
@@ -52,7 +55,6 @@ const Index = () => {
               isPending: true,
             })
           );
-
           setMembers([...teamMembers, ...pendingMembers]);
         }
       } catch (error) {
@@ -84,7 +86,7 @@ const Index = () => {
       // TODO: Fix teamId
       fetchFeedback("679d3792783af6def0268354");
     }
-  }, [user, token, navigate, toast]);
+  }, [user, token, navigate, toast, currentUser]);
 
   const handleViewKudos = (name: string, email: string) => {
     navigate("/view-kudos", { state: { userName: name, userEmail: email } });
@@ -117,13 +119,22 @@ const Index = () => {
           </p>
         </div>
 
-        <TeamMembersList
-          members={members}
-          onMemberSelect={handleMemberSelect}
-        />
+        {members.length > 0 ? (
+          <TeamMembersList
+            members={members}
+            onMemberSelect={handleMemberSelect}
+          />
+        ) : (
+          <EmptyState
+            icon={UserPlus}
+            title="No team members yet"
+            description="To add new members, go to the Manage Team page."
+          />
+        )}
 
         <RecentKudos kudos={teamFeedback} onViewKudos={handleViewKudos} />
       </div>
+
 
       {selectedMember && (
         <FeedbackDialog

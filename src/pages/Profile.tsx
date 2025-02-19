@@ -6,9 +6,9 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { getMyProfile, saveMyProfile } from "@/services/peerApi";
-import { useAuth } from '@/hooks/use-auth';
-import { useRecoilState } from "recoil";
-import { userState } from "@/atoms/UserState";
+import { useAuth } from "@/hooks/use-auth";
+import { useAtom } from "jotai";
+import { User, userAtom } from "@/atoms/UserAtom";
 
 export default function Profile() {
   const { toast } = useToast();
@@ -19,7 +19,7 @@ export default function Profile() {
   const [email, setEmail] = useState("");
   const [profileUrl, setProfileUrl] = useState("");
   const [outOfSync, setOutOfSync] = useState(false);
-  const [appUser, setAppUser] = useRecoilState(userState);
+  const [appUser, setAppUser] = useAtom(userAtom);
 
   useEffect(() => {
     if (user) {
@@ -60,14 +60,16 @@ export default function Profile() {
     try {
       await saveMyProfile(token, { firstName, lastName, email, profileUrl });
 
-      // Update the Recoil state with the new data
-      setAppUser((prev) => ({
-        ...prev,
-        firstName,
-        lastName,
-        profileUrl,
-        hasCompletedProfile: true,
-      }));
+      // Update the state with the new data
+      setAppUser(
+        (prev: User) => ({
+          ...prev,
+          firstName,
+          lastName,
+          profileUrl,
+          hasCompletedProfile: true,
+        })
+      );
       toast({
         title: "Profile Updated",
         description: "Nice one! We have updated your profile.",
@@ -93,7 +95,7 @@ export default function Profile() {
           </p>
         </div>
       )}
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Personal Information</CardTitle>
@@ -110,7 +112,7 @@ export default function Profile() {
                   placeholder="Enter your first name"
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last Name</Label>
                 <Input
@@ -124,12 +126,7 @@ export default function Profile() {
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                value={email}
-                readOnly
-                className="bg-muted"
-              />
+              <Input id="email" value={email} readOnly className="bg-muted" />
             </div>
 
             <div className="space-y-2">
