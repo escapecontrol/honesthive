@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { saveMyProfile } from "@/services/peerApi";
 import { useAuth } from "@/hooks/use-auth";
 import { useAtom } from "jotai";
@@ -14,6 +14,8 @@ export default function Profile() {
   const { toast } = useToast();
   const { user, token } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const inviteSlug = location.state?.inviteSlug;
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -60,7 +62,6 @@ export default function Profile() {
     try {
       await saveMyProfile(token, { firstName, lastName, email, profileUrl });
 
-      // Update the state with the new data
       setAppUser(
         (prev: User) => ({
           ...prev,
@@ -70,11 +71,18 @@ export default function Profile() {
           hasCompletedProfile: true,
         })
       );
+      
       toast({
         title: "Profile Updated 🥳",
         description: "Nice one! We have updated your profile.",
       });
-      navigate("/");
+
+      // If there's an invite slug, redirect to the invitation page
+      if (inviteSlug) {
+        navigate(`/team-invitation/${inviteSlug}`);
+      } else {
+        navigate("/");
+      }
     } catch (error) {
       toast({
         title: "Error",

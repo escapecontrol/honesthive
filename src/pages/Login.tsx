@@ -63,7 +63,13 @@ export default function Login() {
         const from = location.state?.from || "/";
         navigate(from, { replace: true });
       } else {
-        navigate("/profile");
+        // Check if we came from a team invitation
+        const invitePath = location.state?.from;
+        const inviteSlug = invitePath?.match(/\/team-invitation\/(.+)/)?.[1];
+        
+        navigate("/profile", { 
+          state: { inviteSlug }
+        });
       }
     } catch (error) {
       toast({

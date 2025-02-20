@@ -6,16 +6,20 @@ import { useToast } from "@/hooks/use-toast";
 import { Check, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { getInvitation, acceptInvitation } from "@/services/inviteApi";
+import { getMyTeam } from "@/services/peerApi";
 import { useAuth } from "@/hooks/use-auth";
+import { useAtom } from "jotai";
+import { Member, userAtom } from "@/atoms/UserAtom";
 
 export default function TeamInvitation() {
-  const { user, token } = useAuth();
+  const { token } = useAuth();
   const { slug } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [invitationData, setInvitationData] = useState(null);
+  const [, setAppUser] = useAtom(userAtom);
 
   const invitationSlug = slug || "-";
   
@@ -62,6 +66,27 @@ export default function TeamInvitation() {
       if (accept) {
         const acceptResponse = await acceptInvitation(token, invitationSlug);
         if (acceptResponse.statusCode === 200) {
+          const team = acceptResponse.data.team || { id: "", name: "", members: [], pendingMembers: [] };
+
+          const activeMembers = (team.members || []).map((member: Member) => ({
+            ...member,
+            isPending: false
+          }));
+
+          const pendingMembers = (team.pendingMembers || []).map((member: Member) => ({
+            ...member,
+            isPending: true
+          }));
+
+          setAppUser(prev => ({
+            ...prev,
+            team: {
+              id: team.id,
+              name: team.name,
+              members: [...activeMembers, ...pendingMembers],
+            }
+          }));
+
           toast({
             title: "Invitation Accepted",
             description: "You have joined the team.",
@@ -75,7 +100,6 @@ export default function TeamInvitation() {
           });
         }
       } else {
-        // Handle decline invitation logic here if needed
         toast({
           title: "Invitation Declined",
           description: "You have declined the invitation.",
